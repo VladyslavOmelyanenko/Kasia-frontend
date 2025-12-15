@@ -1,0 +1,208 @@
+---
+import GalleryItem from "./GalleryItem.astro";
+
+const { projects = [] } = Astro.props;
+
+const count = projects.length;
+const COPIES = 5; // important: gives us hysteresis
+const repeated = count
+  ? Array.from({ length: COPIES }, () => projects).flat()
+  : [];
+---
+
+<div class="gallery-wrapper">
+  <section
+    class="grid"
+    id="gallery-grid"
+    data-count={count}
+    data-copies={COPIES}
+  >
+    {
+      repeated.map((project, i) => (
+        <div class="snap-item" data-idx={i}>
+          <GalleryItem
+            image={project.coverImage}
+            title={project.title ?? ""}
+            director={project.director ?? ""}
+            year={project.year ?? ""}
+            slug={project.slug?.current ?? ""}
+            caption={project.caption ?? ""}
+          />
+        </div>
+      ))
+    }
+  </section>
+</div>
+
+<style lang="scss">
+  @import "../styles/variables";
+
+  :global(html),
+  :global(body) {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .gallery-wrapper {
+    position: fixed;
+    inset: 0;
+    left: $content-left;
+    width: $content-width;
+  }
+
+  .grid {
+    height: 100%;
+    scrollbar-width: none;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: $lh;
+    scroll-snap-type: y mandatory;
+    overscroll-behavior: contain;
+    scroll-behavior: auto;
+  }
+
+  .snap-item {
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+  }
+</style>
+
+<script>
+  if (typeof window !== "undefined") {
+    window.addEventListener("DOMContentLoaded", () => {
+      const grid = document.querySelector("#gallery-grid");
+      if (!grid) return;
+
+      const count = parseInt(grid.dataset.count || "0", 10);
+      const copies = parseInt(grid.dataset.copies || "0", 10);
+      if (!count || !copies) return;
+
+      const items = Array.from(grid.querySelectorAll(".snap-item"));
+      if (items.length !== count * copies) return;
+
+      const centerCopy = Math.floor(copies / 2); // for 5 => 2
+      const centerStart = count * centerCopy;
+
+      // Cache element centers (in scrollTop space)
+      let centers = [];
+      const recomputeCenters = () => {
+        centers = items.map((el) => el.offsetTop + el.offsetHeight / 2);
+      };
+
+      const closestIndexToViewportCenter = () => {
+        const target = grid.scrollTop + grid.clientHeight / 2;
+
+        // binary search (centers are monotonic)
+        let lo = 0,
+          hi = centers.length - 1;
+        while (lo < hi) {
+          const mid = (lo + hi) >> 1;
+          if (centers[mid] < target) lo = mid + 1;
+          else hi = mid;
+        }
+        let i = lo;
+        if (
+          i > 0 &&
+          Math.abs(centers[i - 1] - target) < Math.abs(centers[i] - target)
+        )
+          i--;
+        return i;
+      };
+
+      const centerTopFor = (idx) =>
+        items[idx].offsetTop -
+        (grid.clientHeight / 2 - items[idx].offsetHeight / 2);
+
+      // Teleport preserving visual position (center-to-center), with 1-frame snap disable
+      const teleportPreservingPosition = (fromIdx, toIdx) => {
+        if (fromIdx === toIdx) return;
+
+        const delta = centers[toIdx] - centers[fromIdx];
+
+        const prevSnap = grid.style.scrollSnapType;
+        grid.style.scrollSnapType = "none";
+        grid.scrollTop += delta;
+        grid.style.scrollSnapType = prevSnap;
+      };
+
+      // Initial positioning
+      requestAnimationFrame(() => {
+        recomputeCenters();
+        grid.scrollTop = centerTopFor(centerStart);
+      });
+
+      // Keep centers accurate if layout changes
+      window.addEventListener("resize", recomputeCenters);
+      window.addEventListener("load", recomputeCenters);
+      const ro = new ResizeObserver(recomputeCenters);
+      items.forEach((el) => ro.observe(el));
+
+      let adjusting = false;
+      let rafLock = false;
+      let lastScrollTop = grid.scrollTop;
+
+      const maybeWrap = () => {
+        if (adjusting) return;
+
+        const idx = closestIndexToViewportCenter();
+        const copyIndex = Math.floor(idx / count);
+
+        // Only wrap when we hit the OUTERMOST copies.
+        // This prevents seam-flipping/flicker near “first/last” items.
+        let targetIdx = null;
+
+        if (copyIndex === 0) {
+          // move down 2 copies back into the middle zone
+          targetIdx = idx + count * 2;
+        } else if (copyIndex === copies - 1) {
+          // move up 2 copies back into the middle zone
+          targetIdx = idx - count * 2;
+        }
+
+        // Backup: if we ever truly clamp at physical ends, force wrap
+        const maxScrollTop = grid.scrollHeight - grid.clientHeight;
+        if (grid.scrollTop <= 1) targetIdx = idx + count * 2;
+        if (grid.scrollTop >= maxScrollTop - 1) targetIdx = idx - count * 2;
+
+        if (targetIdx == null) return;
+
+        targetIdx = Math.max(0, Math.min(items.length - 1, targetIdx));
+
+        adjusting = true;
+        teleportPreservingPosition(idx, targetIdx);
+        lastScrollTop = grid.scrollTop;
+
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => (adjusting = false))
+        );
+      };
+
+      grid.addEventListener("scroll", () => {
+        if (adjusting) return;
+        if (rafLock) return;
+
+        rafLock = true;
+        requestAnimationFrame(() => {
+          rafLock = false;
+          maybeWrap();
+          lastScrollTop = grid.scrollTop;
+        });
+      });
+
+      // Prevent the “pause” if the user is flinging into an edge
+      grid.addEventListener(
+        "wheel",
+        () => {
+          if (adjusting) return;
+          maybeWrap();
+        },
+        { passive: true }
+      );
+    });
+  }
+</script>

@@ -1,0 +1,45 @@
+---
+import Sidebar from "../components/Sidebar.astro";
+
+import "../styles/modern-reset.scss";
+import "../styles/global.scss";
+
+const { title = "Katarzyna Lewińska - Costume Designer" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <div class="container">
+      <Sidebar />
+      <main>
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>
+
+<style lang="scss">
+  @import '../styles/variables';
+  .container {
+    padding: $page-padding;
+    display: flex;
+  }
+  main {
+    width: $content-width;
+    margin-left: $content-left;
+    display: flex;
+    height: calc(100vh - 125px);
+    align-items: center;
+  }
+
+  body,
+  html {
+    scroll-snap-type: y mandatory;
+  }
+</style>

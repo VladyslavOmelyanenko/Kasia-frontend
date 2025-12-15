@@ -1,0 +1,20 @@
+---
+import Layout from "../layouts/Layout.astro";
+import CategoryGrid from "../components/CategoryGrid.astro";
+
+import { client } from "../lib/sanity";
+
+const operaProjects = await client.fetch(`*[_type=="project" && category=="opera"]{
+  title,
+  "slug": slug.current,
+  "coverImage": coverImage,
+  director,
+  year,
+  category,
+  caption
+}`);
+---
+
+<Layout>
+  <CategoryGrid projects={operaProjects} />
+</Layout>

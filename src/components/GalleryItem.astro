@@ -1,0 +1,53 @@
+---
+import { urlFor } from "../lib/sanity";
+
+const {
+  image,
+  title = "",
+  director = "",
+  year = "",
+  slug = "",
+  caption = "",
+} = Astro.props;
+
+
+const imgUrl = image ? urlFor(image).width(1200).url() : "";
+---
+
+<a href={`/projects/${slug}`} class="item">
+  <div class="media">
+    {imgUrl && <img src={imgUrl} alt={title} loading="lazy" decoding="async" />}
+  </div>
+
+  <p class="caption">{caption}</p>
+  <p class="details">
+    {director && `dir. ${director}`}
+    {year && `, ${year}`}
+  </p>
+</a>
+
+<style lang="scss">
+  .item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .media {
+    width: 100%;
+    max-height: 80vh;
+  }
+
+  .media img {
+    width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    display: block;
+  }
+
+  .caption,
+  .details {
+    margin: 0;
+    line-height: 1.2;
+  }
+</style>

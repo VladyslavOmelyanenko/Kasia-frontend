@@ -1,0 +1,29 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { client } from "../lib/sanity";
+import { toHTML } from "@portabletext/to-html";
+
+const about = await client.fetch(`
+  *[_type == "about"][0]{
+    bio,
+    email
+  }
+`);
+
+const bioHtml = about?.bio ? toHTML(about.bio) : "";
+---
+
+<Layout>
+  <div class="about-bio" set:html={bioHtml} />
+</Layout>
+
+<style lang="scss">
+  :global(.about-bio) {
+    column-count: 2;
+    column-gap: 2rem; /* adjust */
+  }
+  
+  :global(.about-bio p) {
+    margin: 0 0 1rem 0;
+  }
+</style>

@@ -1,0 +1,183 @@
+---
+import { client } from "../lib/sanity";
+
+const pathname = Astro.url.pathname;
+
+const data = await client.fetch(`
+  {
+    "opera": *[_type == "project" && category == "opera"] | order(year desc){ title, "slug": slug.current },
+    "film": *[_type == "project" && category == "film"] | order(year desc){ title, "slug": slug.current },
+    "commercials": *[_type == "project" && category == "commercials"] | order(year desc){ title, "slug": slug.current }
+  }
+`);
+
+console.log(pathname);
+
+const isOperaPage =
+  pathname.startsWith("/opera") ||
+  (pathname.startsWith("/projects/") &&
+    data.opera.some((p) => pathname.includes(p.slug)));
+
+const isFilmPage =
+  pathname.startsWith("/film") ||
+  (pathname.startsWith("/projects/") &&
+    data.film.some((p) => pathname.includes(p.slug)));
+
+const isCommercialsPage =
+  pathname.startsWith("/commercials") ||
+  (pathname.startsWith("/projects/") &&
+    data.commercials.some((p) => pathname.includes(p.slug)));
+---
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-item">
+    <a href="/" class="designer-name">Katarzyna Lewińska</a>
+    <span class="designer-title">costume designer</span>
+  </div>
+
+  <div class="sidebar-item">
+    <a href="/about">About</a>
+  </div>
+
+  <div class="sidebar-item">
+    <nav>
+      <ul class="sidebar-navigation">
+        <li class={`nav-category has-submenu ${isOperaPage ? "open" : ""}`}>
+          <a href="/opera">Opera</a>
+          <ul class="submenu">
+            {
+              data.opera.map((p) => (
+                <li>
+                  <a href={`/projects/${p.slug}`}>{p.title}</a>
+                </li>
+              ))
+            }
+          </ul>
+        </li>
+
+        <li class={`nav-category has-submenu ${isFilmPage ? "open" : ""}`}>
+          <a href="/film">Film</a>
+          <ul class="submenu">
+            {
+              data.film.map((p) => (
+                <li>
+                  <a href={`/projects/${p.slug}`}>{p.title}</a>
+                </li>
+              ))
+            }
+          </ul>
+        </li>
+
+        <li
+          class={`nav-category has-submenu ${isCommercialsPage ? "open" : ""}`}
+        >
+          <a href="/commercials">Commercials</a>
+          <ul class="submenu">
+            {
+              data.commercials.map((p) => (
+                <li>
+                  <a href={`/projects/${p.slug}`}>{p.title}</a>
+                </li>
+              ))
+            }
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</aside>
+
+<style lang="scss">
+  @import "../styles/variables";
+
+  .sidebar {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    top: $page-padding;
+    left: $page-padding;
+    bottom: $page-padding;
+    width: $sidebar-width;
+    gap: $lh;
+  }
+
+  .designer-name,
+  .designer-title {
+    display: block;
+  }
+
+  .sidebar-navigation {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .sidebar a {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .submenu {
+    display: none;
+
+    a {
+      padding-left: 25px;
+    }
+  }
+
+  /* Submenu on hover OR when on that section/page */
+  .has-submenu:hover > .submenu,
+  .has-submenu.open > .submenu {
+    display: block;
+  }
+
+  .sidebar {
+    color: #000;
+  }
+
+  .sidebar a,
+  .sidebar span {
+    color: inherit;
+    transition: color 0.15s ease;
+    text-decoration: none;
+  }
+
+  .sidebar {
+    --outer-dark: #8f8f8f; /* normal dim */
+    --outer-light: #cfcfcf; /* lighter when hovering submenu */
+    --black: #000;
+
+    color: var(--black);
+  }
+
+  .sidebar a,
+  .sidebar span {
+    color: inherit;
+    transition: color 0.15s ease;
+    text-decoration: none;
+  }
+
+  /* 1) Dim ONLY when hovering ANY link inside sidebar */
+  .sidebar:has(a:hover) {
+    color: var(--outer-dark);
+  }
+
+  /* 2) If hovering a submenu link -> outer becomes lighter */
+  .sidebar:has(.submenu a:hover) {
+    color: var(--outer-light);
+  }
+
+  /* Keep the currently-hovered category block dark when hovering its submenu */
+  .sidebar:has(.submenu a:hover) .nav-category:has(.submenu a:hover) {
+    color: var(--outer-dark);
+  }
+
+  /* Hovered link is always black (so category names go black too) */
+  .sidebar a:hover {
+    color: var(--black);
+  }
+
+  .sidebar .designer-title {
+    color: $gray;
+  }
+</style>
