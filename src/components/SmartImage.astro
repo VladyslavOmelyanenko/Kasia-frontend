@@ -1,0 +1,182 @@
+---
+import { urlFor } from "../lib/sanity";
+
+const {
+  image = null,
+  srcUrl = "",
+  alt = "",
+  loading = "lazy",
+  width = null,
+  height = null,
+  lqip = null,
+  class: className = "",
+  fit = "contain",
+  bg = "#fff", // IMPORTANT: don’t use transparent for contain
+} = Astro.props;
+
+const hasRef = !!image?.asset?._ref;
+
+const dims = image?.assetDoc?.metadata?.dimensions;
+const w = width ?? dims?.width ?? null;
+const h = height ?? dims?.height ?? null;
+
+const lq = lqip ?? image?.assetDoc?.metadata?.lqip ?? null;
+
+const builder = hasRef ? urlFor(image).auto("format") : null;
+
+// matches $content-width: 50vw (desktop)
+const sizes = "(max-width: 768px) 100vw, 50vw";
+
+const src = srcUrl || (builder ? builder.width(1200).quality(80).url() : "");
+
+const srcset =
+  !srcUrl && builder
+    ? [
+        `${builder.width(400).quality(80).url()} 400w`,
+        `${builder.width(700).quality(80).url()} 700w`,
+        `${builder.width(1000).quality(80).url()} 1000w`,
+        `${builder.width(1200).quality(82).url()} 1200w`,
+        `${builder.width(1600).quality(85).url()} 1600w`,
+        `${builder.width(2000).quality(85).url()} 2000w`,
+      ].join(", ")
+    : undefined;
+
+const fetchpriority = loading === "eager" ? "high" : "auto";
+
+const mediaStyleParts = [];
+if (w && h) mediaStyleParts.push(`aspect-ratio:${w}/${h}`);
+mediaStyleParts.push(`--bg:${bg}`);
+if (lq) mediaStyleParts.push(`--lqip:url(${lq})`);
+const mediaStyle = mediaStyleParts.join(";");
+---
+
+<div
+  class={`smart-media ${lq ? "has-lqip" : ""}`}
+  style={mediaStyle}
+  data-fit={fit}
+>
+  {
+    src && (
+      <img
+        class={`smart-img ${className}`}
+        src={src}
+        srcset={srcset}
+        sizes={srcset ? sizes : undefined}
+        alt={alt}
+        loading={loading}
+        decoding="async"
+        width={w ?? undefined}
+        height={h ?? undefined}
+        fetchpriority={fetchpriority}
+        data-fit={fit}
+        onload="
+          (async () => {
+            const img = this;
+            const m = img.closest('.smart-media');
+            if (!m) return;
+            try { await img.decode?.(); } catch(e) {}
+            // show sharp image first
+            m.classList.add('is-decoded');
+            // then fade placeholders out (next frame so paint commits)
+            requestAnimationFrame(() => m.classList.add('is-loaded'));
+          })();
+        "
+        onerror="this.closest('.smart-media')?.classList.add('is-decoded','is-loaded')"
+      />
+    )
+  }
+</div>
+
+<style lang="scss">
+  .smart-media {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  /* Base placeholder (NOT blurred) – prevents any “empty” frame */
+  .smart-media.has-lqip::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--lqip);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    opacity: 1;
+    transition: opacity 260ms ease;
+    pointer-events: none;
+  }
+
+  /* Blur overlay on top of base */
+  .smart-media.has-lqip::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--lqip);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    filter: blur(18px);
+    transform: scale(1.06) translateZ(0);
+    opacity: 1;
+    transition: opacity 420ms ease;
+    pointer-events: none;
+    backface-visibility: hidden;
+  }
+
+  /* match placeholders to cover when fit=cover */
+  .smart-media[data-fit="cover"].has-lqip::before,
+  .smart-media[data-fit="cover"].has-lqip::after {
+    background-size: cover;
+  }
+
+  .smart-img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 320ms ease;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  .smart-img[data-fit="contain"] {
+    object-fit: contain;
+  }
+  .smart-img[data-fit="cover"] {
+    object-fit: cover;
+  }
+
+  /* show sharp image */
+  .smart-media.is-decoded .smart-img {
+    opacity: 1;
+  }
+
+  /* fade placeholders only after sharp image is visible */
+  .smart-media.has-lqip.is-loaded::before {
+    opacity: 0;
+  }
+  .smart-media.has-lqip.is-loaded::after {
+    opacity: 0;
+    transition-delay: 120ms;
+  }
+
+  /* no lqip => normal flow */
+  .smart-media:not(.has-lqip) .smart-img {
+    position: static;
+    height: auto;
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .smart-img,
+    .smart-media.has-lqip::before,
+    .smart-media.has-lqip::after {
+      transition: none;
+    }
+  }
+</style>

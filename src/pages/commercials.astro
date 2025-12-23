@@ -1,21 +1,32 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import CategoryGrid from "../components/CategoryGrid.astro";
-
 import { client } from "../lib/sanity";
 
-const operaProjects =
-  await client.fetch(`*[_type=="project" && category=="commercials"]{
-  caption,
-  "slug": slug.current,
-  "coverImage": coverImage,
-  director,
-  year,
-  category,
-  caption
-}`);
+const commercialProjects = await client.fetch(`
+  *[_type == "project" && category == "commercials"]
+    | order(orderRank == null, orderRank asc, year desc, title asc){
+      title,
+      "slug": slug.current,
+      director,
+      placeAndYear,
+      category,
+      caption,
+
+      "coverImage": coverImage{
+        ...,
+        asset,
+        "assetDoc": asset->{
+          metadata{
+            dimensions{ width, height },
+            lqip
+          }
+        }
+      }
+    }
+`);
 ---
 
 <Layout>
-  <CategoryGrid projects={operaProjects} />
+  <CategoryGrid projects={commercialProjects} />
 </Layout>

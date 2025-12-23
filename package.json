@@ -13,6 +13,7 @@
     "@portabletext/to-html": "^4.0.1",
     "@sanity/client": "^7.13.1",
     "@sanity/image-url": "^2.0.1",
+    "@sanity/orderable-document-list": "^1.4.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "astro": "^5.16.2",

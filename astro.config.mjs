@@ -5,6 +5,9 @@ import sanity from "@sanity/astro";
 import react from "@astrojs/react";
 
 export default defineConfig({
+  transitions: {
+    enabled: true,
+  },
   integrations: [
     sanity({
       projectId: "zo1houh0", // From sanity.cli.ts
@@ -13,5 +16,5 @@ export default defineConfig({
       apiVersion: "2024-03-15",
     }),
     react(),
-  ]
+  ],
 });

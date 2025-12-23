@@ -1,19 +1,31 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import CategoryGrid from "../components/CategoryGrid.astro";
-
 import { client } from "../lib/sanity";
 
-const projects =
-  await client.fetch(`*[_type=="project" && featured] | order(featuredOrder asc){
-  title,
-  "slug": slug.current,
-  "coverImage": coverImage,
-  director,
-  year,
-  category,
-  caption,
-}`);
+const projects = await client.fetch(`
+  *[_type=="project" && featured == true]
+  | order(orderRank asc){
+    title,
+    "slug": slug.current,
+    director,
+    placeAndYear,
+    category,
+    caption,
+
+    // Keep the image ref AND fetch metadata deterministically
+    "coverImage": coverImage{
+      ...,
+      asset,
+      "assetDoc": asset->{
+        metadata{
+          dimensions{ width, height },
+          lqip
+        }
+      }
+    }
+  }
+`);
 ---
 
 <Layout>

@@ -1,0 +1,318 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import SmartImage from "../../components/SmartImage.astro";
+
+import { client } from "../../lib/sanity";
+import { urlFor } from "../../lib/sanity";
+
+const allowedCategories = ["opera", "film", "commercials"];
+
+export async function getStaticPaths() {
+  const allowed = ["opera", "film", "commercials"];
+
+  const rows = await client.fetch(`
+    *[_type == "project" && defined(slug.current) && defined(category)]{
+      category,
+      "slug": slug.current
+    }
+  `);
+
+  return rows
+    .filter((r) => allowed.includes(r.category) && r.slug)
+    .map((r) => ({ params: { category: r.category, slug: r.slug } }));
+}
+
+const { category, slug } = Astro.params;
+
+if (!category || !allowedCategories.includes(category)) {
+  throw new Error(`Invalid category: ${category}`);
+}
+
+const project = await client.fetch(
+  `
+  *[_type == "project" && category == $category && slug.current == $slug][0]{
+    title,
+    caption,
+    director,
+    award,
+    placeAndYear,
+    trailerLink,
+
+    coverImage{
+      ...,
+      asset,
+      "assetDoc": asset->{
+        metadata{
+          dimensions{ width, height },
+          lqip
+        }
+      }
+    },
+
+    images[]{
+      caption,
+      ...,
+      asset,
+      "assetDoc": asset->{
+        metadata{
+          dimensions{ width, height },
+          lqip
+        }
+      }
+    }
+  }
+  `,
+  { category, slug }
+);
+
+const title = project?.title ?? "Untitled";
+const director = project?.director ?? "";
+const award = project?.award ?? "";
+const placeAndYear = project?.placeAndYear ?? "";
+const trailerLink = project?.trailerLink ?? "";
+
+const safeImageUrl = (img) => {
+  try {
+    return img?.asset?._ref
+      ? urlFor(img).width(2000).auto("format").url()
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const coverUrl = safeImageUrl(project?.coverImage);
+const coverMeta = project?.coverImage?.assetDoc?.metadata?.dimensions;
+const coverLqip = project?.coverImage?.assetDoc?.metadata?.lqip ?? null;
+
+const imageItems = [
+  ...(coverUrl && coverMeta?.width && coverMeta?.height
+    ? [
+        {
+          type: "image",
+          src: coverUrl,
+          caption: null,
+          w: coverMeta.width,
+          h: coverMeta.height,
+          lqip: coverLqip,
+          key: "cover",
+        },
+      ]
+    : []),
+
+  ...(project?.images ?? [])
+    .map((img, idx) => {
+      const meta = img?.assetDoc?.metadata?.dimensions;
+      if (!meta?.width || !meta?.height) return null;
+
+      const src = safeImageUrl(img);
+      if (!src) return null;
+
+      return {
+        type: "image",
+        src,
+        caption: img?.caption ?? null,
+        w: meta.width,
+        h: meta.height,
+        lqip: img?.assetDoc?.metadata?.lqip ?? null,
+        key: `img-${idx}`,
+      };
+    })
+    .filter(Boolean),
+];
+
+const items = project
+  ? [
+      award
+        ? { type: "title-award", key: "title-award" }
+        : { type: "title-basic", key: "title-basic" },
+      ...imageItems,
+    ]
+  : [];
+
+const count = items.length;
+const COPIES = 5;
+
+const centerCopy = Math.floor(COPIES / 2);
+
+// In each copy, index 0 is the title card, index 1 is the first image
+const firstImageIndexInCopy = 1;
+
+// Eager-load around the first image instead of the title
+const centerStart = centerCopy * count + firstImageIndexInCopy;
+const centerEnd = centerStart + 1;
+
+const repeated = count
+  ? Array.from({ length: COPIES }, () => items).flat()
+  : [];
+
+const sectionLabel =
+  category === "film" ? "Film" : category === "opera" ? "Opera" : "Commercials";
+---
+
+<Layout
+  title={project ? `${title} — ${sectionLabel}` : `${sectionLabel} — Not found`}
+>
+  {
+    project ? (
+      <div class="gallery-wrapper">
+        <section
+          class="grid"
+          data-infinite-snap="1"
+          data-count={count}
+          data-copies={COPIES}
+          data-start-at="first-image"
+        >
+          {repeated.map((item, i) => (
+            <div class="snap-item" data-idx={i}>
+              {item.type === "title-award" ? (
+                <header class="title-card">
+                  <div class="left">
+                    <h1 class="title">{title}</h1>
+                    {director && <p>{director}</p>}
+                    {placeAndYear && <p>{placeAndYear}</p>}
+                  </div>
+                  <div class="right">
+                    {award && <p class="award">{award}</p>}
+                    {trailerLink && (
+                      <a
+                        href={trailerLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Trailer
+                      </a>
+                    )}
+                  </div>
+                </header>
+              ) : item.type === "title-basic" ? (
+                <header class="title-card">
+                  <div class="left">
+                    <h1 class="title">{title}</h1>
+                    {director && <p>{director}</p>}
+                  </div>
+                  <div class="right">
+                    {placeAndYear && <p>{placeAndYear}</p>}
+                    {trailerLink && (
+                      <a
+                        href={trailerLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Trailer
+                      </a>
+                    )}
+                  </div>
+                </header>
+              ) : (
+                <figure class="figure">
+                  <SmartImage
+                    srcUrl={item.src}
+                    alt={title}
+                    width={item.w}
+                    height={item.h}
+                    lqip={item.lqip}
+                    loading={
+                      i >= centerStart && i < centerEnd ? "eager" : "lazy"
+                    }
+                    fit="cover"
+                    bg="#fff"
+                  />
+                  {item.caption && (
+                    <figcaption class="img-caption">{item.caption}</figcaption>
+                  )}
+                </figure>
+              )}
+            </div>
+          ))}
+        </section>
+      </div>
+    ) : (
+      <article class="not-found">
+        <h1>Project not found</h1>
+        <p>
+          We couldn’t find a {sectionLabel.toLowerCase()} project for slug:{" "}
+          <code>{slug}</code>
+        </p>
+        <p>
+          <a href={`/${category}`}>Back to {sectionLabel}</a>
+        </p>
+      </article>
+    )
+  }
+</Layout>
+
+<style lang="scss">
+  @import "../../styles/variables";
+
+  .gallery-wrapper {
+    position: fixed;
+    inset: 0;
+    left: $content-left;
+    width: $content-width;
+    overflow: hidden;
+  }
+
+  .grid {
+    height: 100%;
+    scrollbar-width: none;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    scroll-snap-type: y mandatory;
+    overscroll-behavior: contain;
+    scroll-behavior: auto;
+  }
+
+  .snap-item {
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    display: flex;
+    align-items: center;
+    padding-block: $lh;
+  }
+
+  .title-card {
+    width: 100%;
+    display: flex;
+    gap: 0.5rem;
+
+    .award {
+      color: $gray;
+    }
+
+    .left,
+    .right {
+      width: 50%;
+    }
+  }
+
+  .figure {
+    margin: 0;
+    width: 100%;
+  }
+
+  /* SmartImage renders .smart-media -> ensure it behaves like your old img */
+  .figure :global(.smart-media) {
+    max-width: 100%;
+    max-height: 90vh;
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+  }
+
+  /* For contain mode, make the media shrink-to-fit */
+  .figure :global(.smart-media[data-fit="contain"]) {
+    width: auto;
+    height: auto;
+  }
+
+  .img-caption {
+    margin-top: 0.5rem;
+  }
+
+  .not-found {
+    padding-left: $content-left;
+    width: $content-width;
+  }
+</style>

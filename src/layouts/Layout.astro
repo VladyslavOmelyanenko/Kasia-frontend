@@ -5,37 +5,38 @@ import "../styles/modern-reset.scss";
 import "../styles/global.scss";
 
 const { title = "Katarzyna Lewińska - Costume Designer" } = Astro.props;
+
+import { ViewTransitions } from "astro:transitions";
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" transition:animate="none">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
   </head>
   <body>
+    <ViewTransitions />
     <div class="container">
       <Sidebar />
       <main>
         <slot />
       </main>
     </div>
+    <script type="module" src="/scripts/infiniteSnap.js"></script>
   </body>
 </html>
 
 <style lang="scss">
-  @import '../styles/variables';
+  @import "../styles/variables";
   .container {
     padding: $page-padding;
     display: flex;
   }
   main {
     width: $content-width;
-    margin-left: $content-left;
-    display: flex;
-    height: calc(100vh - 125px);
-    align-items: center;
+    margin-left: calc($content-left - $page-padding);
   }
 
   body,

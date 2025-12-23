@@ -1,28 +1,39 @@
 ---
-import { urlFor } from "../lib/sanity";
+import SmartImage from "./SmartImage.astro";
 
 const {
   image,
   title = "",
   director = "",
-  year = "",
+  placeAndYear = "",
   slug = "",
-  caption = "",
+  category = "",
+  loading = "lazy",
 } = Astro.props;
 
-
-const imgUrl = image ? urlFor(image).width(1200).url() : "";
+// Optional portrait rule (narrower media)
+const dims = image?.assetDoc?.metadata?.dimensions;
+const w = dims?.width;
+const h = dims?.height;
+const isPortrait = !!(w && h && h / w > 1.15);
 ---
 
-<a href={`/projects/${slug}`} class="item">
+<a href={`/${category}/${slug}`} class={`item ${isPortrait ? "portrait" : ""}`}>
   <div class="media">
-    {imgUrl && <img src={imgUrl} alt={title} loading="lazy" decoding="async" />}
+    <SmartImage
+      image={image}
+      alt={title}
+      loading={loading}
+      fit="cover"
+      bg="#fff"
+    />
   </div>
 
-  <p class="caption">{caption}</p>
   <p class="details">
-    {director && `dir. ${director}`}
-    {year && `, ${year}`}
+    <span class="title">{title}</span>
+    <span class="meta">
+      {`${director}${placeAndYear && ","} ${placeAndYear}`}
+    </span>
   </p>
 </a>
 
@@ -31,23 +42,52 @@ const imgUrl = image ? urlFor(image).width(1200).url() : "";
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    width: 100%;
+    text-decoration: none;
+    color: inherit;
   }
 
   .media {
     width: 100%;
-    max-height: 80vh;
   }
 
-  .media img {
-    width: 100%;
-    max-height: 80vh;
-    object-fit: contain;
-    display: block;
+  /* Optional portrait treatment */
+  .item.portrait .media {
+    width: 60%;
   }
 
-  .caption,
   .details {
     margin: 0;
     line-height: 1.2;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .title {
+    display: block;
+  }
+
+  .meta {
+    display: block;
+  }
+
+  /* Prevent dimming on click/tap */
+  .item,
+  .item:active,
+  .item:focus,
+  .item:focus-visible {
+    opacity: 1 !important;
+  }
+
+  /* If you have hover dimming, keep it off for the image */
+  .item:hover .smart-media,
+  .item:active .smart-media,
+  .item:focus-visible .smart-media {
+    opacity: 1 !important;
+  }
+
+  /* Mobile tap highlight can look like a flash */
+  .item {
+    -webkit-tap-highlight-color: transparent;
   }
 </style>

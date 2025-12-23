@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import { client } from "../lib/sanity";
 import { toHTML } from "@portabletext/to-html";
+import { urlFor } from "../lib/sanity";
 
 const about = await client.fetch(`
   *[_type == "about"][0]{
@@ -10,7 +11,23 @@ const about = await client.fetch(`
   }
 `);
 
-const bioHtml = about?.bio ? toHTML(about.bio) : "";
+const bioHtml = about?.bio
+  ? toHTML(about.bio, {
+      components: {
+        types: {
+          image: ({ value }) => {
+            const src = value?.asset ? urlFor(value).width(1200).url() : "";
+            const alt = value?.alt || "";
+            return src
+              ? `<figure class="about-image">
+                   <img src="${src}" alt="${alt}" />
+                 </figure>`
+              : "";
+          },
+        },
+      },
+    })
+  : "";
 ---
 
 <Layout>
@@ -20,10 +37,23 @@ const bioHtml = about?.bio ? toHTML(about.bio) : "";
 <style lang="scss">
   :global(.about-bio) {
     column-count: 2;
-    column-gap: 2rem; /* adjust */
+    column-gap: 2rem;
   }
-  
+
   :global(.about-bio p) {
     margin: 0 0 1rem 0;
+  }
+
+  /* 🔑 prevent image splitting across columns */
+  // :global(.about-bio figure) {
+  //   break-inside: avoid;
+  //   margin: 0 0 1.5rem 0;
+  // }
+
+  :global(.about-bio img) {
+    width: 50%;
+    height: auto;
+    display: block;
+
   }
 </style>
