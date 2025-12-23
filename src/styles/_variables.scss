@@ -3,9 +3,9 @@ $base-space: 6px;
 $gray: gray;
 
 $page-padding: 25px;
-$sidebar-width: 240px;
+$sidebar-width: 200px;
 $content-width: 50vw;
 
-$side-gap: calc((100vw - $sidebar-width - $content-width) / 2);
-// $content-left: calc($page-padding + $sidebar-width + $side-gap);
-$content-left: 25vw;
+$side-gap: calc((100vw - (2 * $page-padding) - $sidebar-width - $content-width) / 2);
+$content-left: calc($page-padding + $sidebar-width + $side-gap);
+// $content-left: 25vw;

@@ -78,18 +78,14 @@ const repeated = count
     scroll-snap-stop: always;
 
     width: 100%;
-    display: flex;
-    justify-content: center; /* centers content column */
+    display: block;
     padding-block: $lh;
   }
 
   /* The actual card/anchor should be limited to the content width */
   .snap-item :global(.item) {
-    width: $content-width; /* 50vw */
-    /* if you want exact same left offset as your main layout, use margin-left instead:
-     margin-left: $content-left;
-     margin-right: auto;
-     width: $content-width;
-  */
+    width: $content-width; 
+    margin-left: $content-left;
+    margin-right: 0;
   }
 </style>
