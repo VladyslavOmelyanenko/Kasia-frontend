@@ -1,0 +1,85 @@
+---
+const { images = [], urlFor, interval = 4000 } = Astro.props;
+
+const slides = images
+  .filter((img) => img?.asset?._ref)
+  .map((img) => ({
+    src: urlFor(img).auto("format").url(),
+    alt: img?.alt ?? "Slide",
+  }));
+---
+
+<div class="slideshow" data-interval={interval}>
+  <div class="slides">
+    {
+      slides.map((s, i) => (
+        <img
+          class={`slide ${i === 0 ? "is-active" : ""}`}
+          src={s.src}
+          alt={s.alt}
+          loading={i === 0 ? "eager" : "lazy"}
+        />
+      ))
+    }
+  </div>
+</div>
+
+<style lang="scss">
+  .slideshow {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+
+    .slides {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      aspect-ratio: 16 / 9;
+
+      .slide {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        opacity: 0;
+        transition: opacity 600ms ease;
+        pointer-events: none;
+
+        &.is-active {
+          opacity: 1;
+          pointer-events: auto;
+        }
+      }
+    }
+  }
+</style>
+
+<script is:inline>
+  document.querySelectorAll(".slideshow").forEach((root) => {
+    const slides = Array.from(root.querySelectorAll(".slide"));
+    if (slides.length <= 1) return;
+
+    const interval = Number(root.dataset.interval) || 4000;
+    let index = 0;
+    let timer = null;
+
+    const show = (i) => {
+      slides[index].classList.remove("is-active");
+      index = (i + slides.length) % slides.length;
+      slides[index].classList.add("is-active");
+    };
+
+    const start = () => {
+      stop();
+      timer = setInterval(() => show(index + 1), interval);
+    };
+    const stop = () => {
+      if (timer) clearInterval(timer);
+      timer = null;
+    };
+
+    start();
+  });
+</script>

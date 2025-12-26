@@ -7,5 +7,5 @@ $sidebar-width: 200px;
 $content-width: 50vw;
 
 $side-gap: calc((100vw - (2 * $page-padding) - $sidebar-width - $content-width) / 2);
-$content-left: calc($page-padding + $sidebar-width + $side-gap);
+$content-left: calc($page-padding + 190px + $side-gap);
 // $content-left: 25vw;

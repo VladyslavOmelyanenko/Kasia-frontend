@@ -1,33 +1,31 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import CategoryGrid from "../components/CategoryGrid.astro";
-import { client } from "../lib/sanity";
+import Slideshow from "../components/Slideshow.astro";
+import { client, urlFor } from "../lib/sanity";
 
-const projects = await client.fetch(`
-  *[_type=="project" && featured == true]
-  | order(orderRank asc){
-    title,
-    "slug": slug.current,
-    director,
-    placeAndYear,
-    category,
-    caption,
-
-    // Keep the image ref AND fetch metadata deterministically
-    "coverImage": coverImage{
-      ...,
-      asset,
-      "assetDoc": asset->{
-        metadata{
-          dimensions{ width, height },
-          lqip
-        }
-      }
-    }
+const coverImages = await client.fetch(`
+  *[_type == "mainPage"][0]{
+    coverGallery[]
   }
 `);
 ---
 
 <Layout>
-  <CategoryGrid projects={projects} />
+  <div class="slideshow-container">
+    <Slideshow
+      images={coverImages?.coverGallery ?? []}
+      urlFor={urlFor}
+      interval={5000}
+    />
+  </div>
 </Layout>
+
+<style lang="scss">
+  @import "../styles/_variables.scss";
+
+  .slideshow-container {
+    height: calc(100vh - $page-padding * 2);
+    display: flex;
+    align-items: center;
+  }
+</style>
