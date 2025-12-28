@@ -1,11 +1,11 @@
 :root {
-  --fz: 18px;
-  --lh: 21px;
+  --fz: 22px;
+  --lh: 25px;
   --base-space: 6px;
   --gray: gray;
 
   --page-padding: 25px;
-  --sidebar-width: 200px;
+  --sidebar-width: 280px;
   --content-width: 50vw;
 
   --side-gap: calc((100vw - (2 * var(--page-padding)) - var(--sidebar-width) - var(--content-width)) / 2);
