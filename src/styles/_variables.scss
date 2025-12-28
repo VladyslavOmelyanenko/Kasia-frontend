@@ -16,7 +16,7 @@
   :root {
     --page-padding: 16px;
     --sidebar-width: 0px;
-    --content-width: 100vw;
+    --content-width: calc(100vw - 32px);
 
     --side-gap: 0px;
     --content-left: var(--page-padding);
