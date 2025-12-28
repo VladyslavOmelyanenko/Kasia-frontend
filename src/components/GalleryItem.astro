@@ -45,15 +45,25 @@ const isPortrait = !!(w && h && h / w > 1.15);
     width: 100%;
     text-decoration: none;
     color: inherit;
+
+    /* Mobile tap highlight can look like a flash */
+    -webkit-tap-highlight-color: transparent;
   }
 
   .media {
     width: 100%;
   }
 
-  /* Optional portrait treatment */
+  /* Optional portrait treatment (desktop) */
   .item.portrait .media {
     width: 60%;
+  }
+
+  /* On mobile, let portraits use full width */
+  @media (max-width: 768px) {
+    .item.portrait .media {
+      width: 100%;
+    }
   }
 
   .details {
@@ -63,10 +73,7 @@ const isPortrait = !!(w && h && h / w > 1.15);
     justify-content: space-between;
   }
 
-  .title {
-    display: block;
-  }
-
+  .title,
   .meta {
     display: block;
   }
@@ -84,10 +91,5 @@ const isPortrait = !!(w && h && h / w > 1.15);
   .item:active .smart-media,
   .item:focus-visible .smart-media {
     opacity: 1 !important;
-  }
-
-  /* Mobile tap highlight can look like a flash */
-  .item {
-    -webkit-tap-highlight-color: transparent;
   }
 </style>

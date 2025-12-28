@@ -29,18 +29,20 @@ import { ViewTransitions } from "astro:transitions";
 </html>
 
 <style lang="scss">
-  @import "../styles/variables";
+  /* variables are now CSS custom properties defined globally (:root) */
+
   .container {
-    padding: $page-padding;
+    padding: var(--page-padding);
     display: flex;
   }
+
   main {
-    width: $content-width;
-    margin-left: calc($content-left - $page-padding);
+    width: var(--content-width);
+    margin-left: calc(var(--content-left) - var(--page-padding));
   }
 
-  body,
-  html {
+  html,
+  body {
     scroll-snap-type: y mandatory;
   }
 </style>

@@ -5,7 +5,7 @@ const slides = images
   .filter((img) => img?.asset?._ref)
   .map((img) => ({
     src: urlFor(img).auto("format").url(),
-    alt: img?.alt ?? "Slide",
+    alt: img?.alt ?? "",
   }));
 ---
 
@@ -30,56 +30,79 @@ const slides = images
     width: 100%;
     height: 100%;
     overflow: hidden;
+  }
 
+  .slides {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 16 / 9;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity 600ms ease;
+    pointer-events: none;
+  }
+
+  .slide.is-active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Optional: if you want a different fit on mobile */
+  @media (max-width: 768px) {
     .slides {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      aspect-ratio: 16 / 9;
+      aspect-ratio: auto; /* let it fill available height */
+    }
 
-      .slide {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        opacity: 0;
-        transition: opacity 600ms ease;
-        pointer-events: none;
-
-        &.is-active {
-          opacity: 1;
-          pointer-events: auto;
-        }
-      }
+    .slide {
+      object-fit: contain; /* keep contain; change to cover if you want */
     }
   }
 </style>
 
 <script is:inline>
-  document.querySelectorAll(".slideshow").forEach((root) => {
-    const slides = Array.from(root.querySelectorAll(".slide"));
-    if (slides.length <= 1) return;
+  function initSlideshows() {
+    document.querySelectorAll(".slideshow").forEach((root) => {
+      // prevent double init (important with Astro view transitions)
+      if (root.dataset.bound === "1") return;
+      root.dataset.bound = "1";
 
-    const interval = Number(root.dataset.interval) || 4000;
-    let index = 0;
-    let timer = null;
+      const slides = Array.from(root.querySelectorAll(".slide"));
+      if (slides.length <= 1) return;
 
-    const show = (i) => {
-      slides[index].classList.remove("is-active");
-      index = (i + slides.length) % slides.length;
-      slides[index].classList.add("is-active");
-    };
+      const interval = Number(root.dataset.interval) || 4000;
+      let index = 0;
+      let timer = null;
 
-    const start = () => {
-      stop();
-      timer = setInterval(() => show(index + 1), interval);
-    };
-    const stop = () => {
-      if (timer) clearInterval(timer);
-      timer = null;
-    };
+      const show = (i) => {
+        slides[index].classList.remove("is-active");
+        index = (i + slides.length) % slides.length;
+        slides[index].classList.add("is-active");
+      };
 
-    start();
-  });
+      const start = () => {
+        stop();
+        timer = setInterval(() => show(index + 1), interval);
+      };
+
+      const stop = () => {
+        if (timer) clearInterval(timer);
+        timer = null;
+      };
+
+      start();
+    });
+  }
+
+  // first load
+  document.addEventListener("DOMContentLoaded", initSlideshows);
+  // client-side navigation (View Transitions)
+  document.addEventListener("astro:after-swap", initSlideshows);
 </script>

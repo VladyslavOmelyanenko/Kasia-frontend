@@ -21,10 +21,9 @@ const coverImages = await client.fetch(`
 </Layout>
 
 <style lang="scss">
-  @import "../styles/_variables.scss";
 
   .slideshow-container {
-    height: calc(100vh - $page-padding * 2);
+    height: calc(100vh - (var(--page-padding) * 2));
     display: flex;
     align-items: center;
   }

@@ -1,11 +1,28 @@
-$lh: 21px;
-$base-space: 6px;
-$gray: gray;
+:root {
+  --fz: 18px;
+  --lh: 21px;
+  --base-space: 6px;
+  --gray: gray;
 
-$page-padding: 25px;
-$sidebar-width: 200px;
-$content-width: 50vw;
+  --page-padding: 25px;
+  --sidebar-width: 200px;
+  --content-width: 50vw;
 
-$side-gap: calc((100vw - (2 * $page-padding) - $sidebar-width - $content-width) / 2);
-$content-left: calc($page-padding + 190px + $side-gap);
-// $content-left: 25vw;
+  --side-gap: calc((100vw - (2 * var(--page-padding)) - var(--sidebar-width) - var(--content-width)) / 2);
+  --content-left: calc(var(--page-padding) + 190px + var(--side-gap));
+}
+
+@media (max-width: 768px) {
+  :root {
+    --page-padding: 16px;
+    --sidebar-width: 0px;
+    --content-width: 100vw;
+
+    --side-gap: 0px;
+    --content-left: var(--page-padding);
+
+    --fz: 16px;
+    --lh: 21px;
+    /* optional */
+  }
+}

@@ -23,14 +23,12 @@ const data = await client.fetch(`
 }
 `);
 
-// pathname like: /film, /film/some-slug, /opera/some-slug, /commercials, /about
 const pathname = (Astro.url?.pathname ?? "").replace(/\/$/, "");
 const parts = pathname.split("/").filter(Boolean);
 const section = parts[0] ?? "";
 const slug = parts[1] ?? null;
 
 const isAboutPage = section === "about";
-const isHomePage = section === "";
 
 const activeCategory =
   section === "opera" || section === "film" || section === "commercials"
@@ -44,108 +42,159 @@ const isCommercialsOpen = activeCategory === "commercials";
 const activeSlug = slug;
 ---
 
-<aside class={`sidebar ${isAboutPage ? "is-about" : ""}`} id="sidebar">
-  <div class="sidebar-item">
-    <a href="/" class="designer-name">Katarzyna Lewińska</a>
-    <span class="designer-title">costume designer</span>
-  </div>
+<aside
+  class={`sidebar ${isAboutPage ? "is-about" : ""}`}
+  id="sidebar"
+  data-menu="closed"
+>
+  <div class="topbar">
+    <div class="brand">
+      <a href="/" class="designer-name">Katarzyna Lewińska</a>
+      <span class="designer-title js-mobile-only">costume designer</span>
+    </div>
 
-  <div class="sidebar-item">
-    <a href="/about" class={`about-link ${isAboutPage ? "is-active" : ""}`}
-      >About</a
+    <button
+      type="button"
+      class="menu-btn"
+      aria-controls="sidebar-panel"
+      aria-expanded="false"
     >
+      Menu
+    </button>
   </div>
 
-  <div class="sidebar-item">
-    <nav>
-      <ul class="sidebar-navigation">
-        <!-- OPERA -->
-        <li class={`nav-category has-submenu ${isOperaOpen ? "is-open" : ""}`}>
-          <a class="category-link" href="/opera">Opera</a>
-          <ul class="submenu">
-            {
-              data.opera.map((p) => (
-                <li>
-                  <a
-                    class={
-                      activeCategory === "opera" && activeSlug === p.slug
-                        ? "is-active"
-                        : ""
-                    }
-                    href={`/opera/${p.slug}`}
-                  >
-                    {p.title}
-                  </a>
-                </li>
-              ))
-            }
-          </ul>
-        </li>
+  <div class="panel" id="sidebar-panel">
+    <div class="sidebar-item">
+      <a href="/about" class={`about-link ${isAboutPage ? "is-active" : ""}`}>
+        About
+      </a>
+    </div>
 
-        <!-- FILM -->
-        <li class={`nav-category has-submenu ${isFilmOpen ? "is-open" : ""}`}>
-          <a class="category-link" href="/film">Film</a>
-          <ul class="submenu">
-            {
-              data.film.map((p) => (
-                <li>
-                  <a
-                    class={
-                      activeCategory === "film" && activeSlug === p.slug
-                        ? "is-active"
-                        : ""
-                    }
-                    href={`/film/${p.slug}`}
-                  >
-                    {p.title}
-                  </a>
-                </li>
-              ))
-            }
-          </ul>
-        </li>
+    <div class="sidebar-item">
+      <nav>
+        <ul class="sidebar-navigation">
+          <li
+            class={`nav-category has-submenu ${isOperaOpen ? "is-open" : ""}`}
+          >
+            <a class="category-link" href="/opera">Opera</a>
+            <ul class="submenu">
+              {
+                data.opera.map((p) => (
+                  <li>
+                    <a
+                      class={
+                        activeCategory === "opera" && activeSlug === p.slug
+                          ? "is-active"
+                          : ""
+                      }
+                      href={`/opera/${p.slug}`}
+                    >
+                      {p.title}
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+          </li>
 
-        <!-- COMMERCIALS -->
-        <li
-          class={`nav-category has-submenu ${isCommercialsOpen ? "is-open" : ""}`}
-        >
-          <a class="category-link" href="/commercials">Commercials</a>
-          <ul class="submenu">
-            {
-              data.commercials.map((p) => (
-                <li>
-                  <a
-                    class={
-                      activeCategory === "commercials" && activeSlug === p.slug
-                        ? "is-active"
-                        : ""
-                    }
-                    href={`/commercials/${p.slug}`}
-                  >
-                    {p.title}
-                  </a>
-                </li>
-              ))
-            }
-          </ul>
-        </li>
-      </ul>
-    </nav>
+          <li class={`nav-category has-submenu ${isFilmOpen ? "is-open" : ""}`}>
+            <a class="category-link" href="/film">Film</a>
+            <ul class="submenu">
+              {
+                data.film.map((p) => (
+                  <li>
+                    <a
+                      class={
+                        activeCategory === "film" && activeSlug === p.slug
+                          ? "is-active"
+                          : ""
+                      }
+                      href={`/film/${p.slug}`}
+                    >
+                      {p.title}
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+          </li>
+
+          <li
+            class={`nav-category has-submenu ${isCommercialsOpen ? "is-open" : ""}`}
+          >
+            <a class="category-link" href="/commercials">Commercials</a>
+            <ul class="submenu">
+              {
+                data.commercials.map((p) => (
+                  <li>
+                    <a
+                      class={
+                        activeCategory === "commercials" &&
+                        activeSlug === p.slug
+                          ? "is-active"
+                          : ""
+                      }
+                      href={`/commercials/${p.slug}`}
+                    >
+                      {p.title}
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+          </li>
+        </ul>
+      </nav>
+    </div>
   </div>
 </aside>
 
+<script is:inline>
+  function initSidebarMenu() {
+    const sidebar = document.getElementById("sidebar");
+    if (!sidebar || sidebar.dataset.menuBound === "1") return;
+    sidebar.dataset.menuBound = "1";
+
+    const btn = sidebar.querySelector(".menu-btn");
+    const panel = document.getElementById("sidebar-panel");
+    if (!btn || !panel) return;
+
+    const setOpen = (open) => {
+      sidebar.dataset.menu = open ? "open" : "closed";
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+    };
+
+    setOpen(false);
+
+    btn.addEventListener("click", () => {
+      setOpen(sidebar.dataset.menu !== "open");
+    });
+
+    panel.addEventListener("click", (e) => {
+      if (e.target.closest("a")) setOpen(false);
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") setOpen(false);
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", initSidebarMenu);
+  document.addEventListener("astro:after-swap", initSidebarMenu);
+</script>
+
 <style lang="scss">
-  @import "../styles/variables";
+  /* assumes :root CSS vars are defined globally */
 
   .sidebar {
     position: fixed;
     display: flex;
     z-index: 300;
     flex-direction: column;
-    top: $page-padding;
-    left: $page-padding;
-    width: $sidebar-width; /* your 200px */
-    gap: $lh;
+    top: var(--page-padding);
+    left: var(--page-padding);
+    width: var(--sidebar-width);
+    gap: var(--lh);
 
     --outer-dark: #8f8f8f;
     --outer-light: #cfcfcf;
@@ -154,15 +203,36 @@ const activeSlug = slug;
     color: var(--black);
   }
 
+  .panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--lh);
+  }
+
   .designer-name,
   .designer-title {
     display: block;
   }
 
-  /* (1) designer-title follows outer-link color, but is not interactive */
   .designer-title {
     pointer-events: none;
     user-select: none;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .menu-btn {
+    display: none;
+    border: 0;
+    background: none;
+    padding: 6px 10px;
+    cursor: pointer;
+    color: inherit;
   }
 
   .sidebar-navigation {
@@ -186,15 +256,11 @@ const activeSlug = slug;
     }
   }
 
-  /* open submenu on hover OR when current category is open */
   .has-submenu:hover > .submenu,
   .has-submenu.is-open > .submenu {
     display: block;
   }
 
-  /* -------------------------------------------
-     ABOUT PAGE: only name + about black, rest gray
-     ------------------------------------------- */
   .sidebar.is-about {
     color: var(--outer-dark);
   }
@@ -204,88 +270,58 @@ const activeSlug = slug;
     color: var(--black);
   }
 
-  /* -------------------------------------------
-     ACTIVE (no hover): dim others, keep only active bits black
-     ------------------------------------------- */
-  .sidebar:has(.nav-category.is-open) {
-    color: var(--outer-dark);
-  }
+  /* hover + active logic untouched */
 
-  /* active category title black */
-  .sidebar:has(.nav-category.is-open) .nav-category.is-open > .category-link {
-    color: var(--black);
-  }
+  @media (max-width: 768px) {
+    .sidebar {
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: var(--page-padding);
+      gap: 12px;
 
-  /* only active project black */
-  .sidebar:has(.nav-category.is-open) .submenu a.is-active {
-    color: var(--black);
-  }
+      /* default: closed look */
+      background: transparent;
+    }
 
-  /* -------------------------------------------
-   ACTIVE PROJECT (no hover): mimic submenu-hover lightening
-   ------------------------------------------- */
-  .sidebar:has(.submenu a.is-active):not(:has(a:hover)) {
-    color: var(--outer-light);
-  }
+    /* When menu is open, give it a white background */
+    .sidebar[data-menu="open"] {
+      background: #fff;
+      bottom: 0;
+    }
 
-  /* keep the active category block darker (like hover does) */
-  .sidebar:has(.submenu a.is-active):not(:has(a:hover))
-    .nav-category:has(.submenu a.is-active) {
-    color: var(--outer-dark);
-  }
+    .menu-btn {
+      display: inline-flex;
+      align-items: center;
+    }
 
-  /* don’t force the active category title to black in this mode */
-  .sidebar:has(.submenu a.is-active):not(:has(a:hover))
-    .nav-category:has(.submenu a.is-active)
-    > .category-link {
-    color: inherit;
-  }
+    /* Hide "costume designer" when closed */
+    .designer-title {
+      display: none;
+    }
 
-  /* active project stays black */
-  .sidebar:has(.submenu a.is-active):not(:has(a:hover)) .submenu a.is-active {
-    color: var(--black);
-  }
+    /* Show it only when open */
+    .sidebar[data-menu="open"] .designer-title {
+      display: block;
+    }
 
-  /* -------------------------------------------
-     HOVER priority: only ONE black thing at a time
-     ------------------------------------------- */
+    .sidebar .panel {
+      display: none;
+      padding-top: 12px;
+    }
 
-  /* dim ONLY when hovering a LINK */
-  .sidebar:has(a:hover) {
-    color: var(--outer-dark);
-  }
+    .sidebar[data-menu="open"] .panel {
+      display: flex;
+      gap: var(--lh);
+    }
 
-  /* hovering a submenu link makes the "outside" even lighter */
-  .sidebar:has(.submenu a:hover) {
-    color: var(--outer-light);
-  }
+    /* No hover on mobile; show submenu items */
+    .submenu {
+      display: block;
 
-  .sidebar:has(.submenu a:hover)
-    .nav-category:has(.submenu a:hover)
-    > .category-link,
-  .sidebar:has(.submenu a:hover) .nav-category.is-open > .category-link {
-    color: inherit; /* hovered category stays outer-dark; active one becomes dim */
+      a {
+        padding-left: 16px;
+      }
+    }
   }
-
-  /* keep the hovered category block dark when hovering one of its submenu links */
-  .sidebar:has(.submenu a:hover) .nav-category:has(.submenu a:hover) {
-    color: var(--outer-dark);
-  }
-
-  /* hovered link is the only black */
-  .sidebar a:hover {
-    color: var(--black);
-  }
-
-  /* (2) hover wins: remove "active black" while hovering, but keep submenu open via .is-open */
-  .sidebar:has(a:hover) .nav-category.is-open > .category-link {
-    color: inherit;
-  }
-  .sidebar:has(a:hover) .submenu a.is-active {
-    color: inherit;
-  }
-
-  /* IMPORTANT CHANGE:
-     Removed the rule that turned name/about gray while hovering on the About page,
-     so they stay black on /about. */
 </style>

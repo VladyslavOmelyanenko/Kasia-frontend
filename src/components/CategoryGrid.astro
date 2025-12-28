@@ -40,7 +40,8 @@ const repeated = count
 </div>
 
 <style lang="scss">
-  @import "../styles/variables";
+  /* No need to @import variables for layout values anymore
+     (assuming you defined :root CSS vars globally). */
 
   :global(html),
   :global(body) {
@@ -48,15 +49,12 @@ const repeated = count
     overflow: hidden;
   }
 
-  /* FULL viewport layer so you can scroll anywhere */
   .gallery-wrapper {
     position: fixed;
     inset: 0;
     width: 100vw;
-
   }
 
-  /* FULL viewport scroll container */
   .grid {
     height: 100%;
     width: 100%;
@@ -71,21 +69,29 @@ const repeated = count
     scroll-behavior: auto;
   }
 
-  /* Each snap row spans full width,
-   but we center the inner content to your 50vw column */
   .snap-item {
     scroll-snap-align: center;
     scroll-snap-stop: always;
 
     width: 100%;
     display: block;
-    padding-block: $lh;
+    padding-block: var(--lh);
   }
 
   /* The actual card/anchor should be limited to the content width */
   .snap-item :global(.item) {
-    width: $content-width; 
-    margin-left: $content-left;
+    width: var(--content-width);
+    margin-left: var(--content-left);
     margin-right: 0;
+  }
+
+  /* If you already override vars in :root for mobile,
+     you can keep this empty or remove it entirely.
+     Keeping it only if you want extra tweaks beyond the vars. */
+  @media (max-width: 768px) {
+    .snap-item :global(.item) {
+      width: var(--content-width);
+      margin-left: var(--content-left);
+    }
   }
 </style>

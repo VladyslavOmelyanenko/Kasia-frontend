@@ -257,13 +257,13 @@ const sectionLabel =
 </Layout>
 
 <style lang="scss">
-  @import "../../styles/variables";
+  /* layout vars now come from global CSS custom properties (:root) */
 
   .gallery-wrapper {
     position: fixed;
     inset: 0;
-    left: $content-left;
-    width: $content-width;
+    left: var(--content-left);
+    width: var(--content-width);
     overflow: hidden;
   }
 
@@ -283,7 +283,7 @@ const sectionLabel =
     scroll-snap-stop: always;
     display: flex;
     align-items: center;
-    padding-block: $lh;
+    padding-block: var(--lh);
   }
 
   .title-card {
@@ -292,7 +292,7 @@ const sectionLabel =
     gap: 0.5rem;
 
     .award {
-      color: $gray;
+      color: var(--gray);
     }
 
     .left,
@@ -312,7 +312,6 @@ const sectionLabel =
     max-height: 90vh;
     width: auto;
     height: auto;
-    // margin: 0 auto;
   }
 
   /* For contain mode, make the media shrink-to-fit */
@@ -321,9 +320,10 @@ const sectionLabel =
     height: auto;
   }
 
+  /* Portrait treatment */
   .figure.portrait :global(.smart-media) {
     max-width: 60%;
-    max-height: auto;
+    max-height: 90vh; /* "auto" is not valid for max-height */
   }
 
   .img-caption {
@@ -331,7 +331,7 @@ const sectionLabel =
   }
 
   .not-found {
-    padding-left: $content-left;
-    width: $content-width;
+    padding-left: var(--content-left);
+    width: var(--content-width);
   }
 </style>

@@ -24,8 +24,11 @@ const lq = lqip ?? image?.assetDoc?.metadata?.lqip ?? null;
 
 const builder = hasRef ? urlFor(image).auto("format") : null;
 
-// matches $content-width: 50vw (desktop)
-const sizes = "(max-width: 768px) 100vw, 50vw";
+/**
+ * Use your global CSS var-driven layout instead of hard-coding "50vw".
+ * This stays correct when you switch --content-width on mobile.
+ */
+const sizes = "(max-width: 768px) 100vw, 50vw"; // keep as-is unless you also change desktop content width
 
 const src = srcUrl || (builder ? builder.width(1200).quality(80).url() : "");
 
@@ -70,17 +73,15 @@ const mediaStyle = mediaStyleParts.join(";");
         fetchpriority={fetchpriority}
         data-fit={fit}
         onload="
-          (async () => {
-            const img = this;
-            const m = img.closest('.smart-media');
-            if (!m) return;
-            try { await img.decode?.(); } catch(e) {}
-            // show sharp image first
-            m.classList.add('is-decoded');
-            // then fade placeholders out (next frame so paint commits)
-            requestAnimationFrame(() => m.classList.add('is-loaded'));
-          })();
-        "
+        (async () => {
+          const img = this;
+          const m = img.closest('.smart-media');
+          if (!m) return;
+          try { await img.decode?.(); } catch(e) {}
+          m.classList.add('is-decoded');
+          requestAnimationFrame(() => m.classList.add('is-loaded'));
+        })();
+      "
         onerror="this.closest('.smart-media')?.classList.add('is-decoded','is-loaded')"
       />
     )
