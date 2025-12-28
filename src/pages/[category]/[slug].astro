@@ -96,6 +96,12 @@ const imageItems = [
           h: coverMeta.height,
           lqip: coverLqip,
           key: "cover",
+          orientation:
+            coverMeta.height > coverMeta.width
+              ? "portrait"
+              : coverMeta.height < coverMeta.width
+                ? "landscape"
+                : "square",
         },
       ]
     : []),
@@ -108,6 +114,13 @@ const imageItems = [
       const src = safeImageUrl(img);
       if (!src) return null;
 
+      const orientation =
+        meta.height > meta.width
+          ? "portrait"
+          : meta.height < meta.width
+            ? "landscape"
+            : "square";
+
       return {
         type: "image",
         src,
@@ -116,6 +129,7 @@ const imageItems = [
         h: meta.height,
         lqip: img?.assetDoc?.metadata?.lqip ?? null,
         key: `img-${idx}`,
+        orientation,
       };
     })
     .filter(Boolean),
@@ -205,7 +219,7 @@ const sectionLabel =
                   </div>
                 </header>
               ) : (
-                <figure class="figure">
+                <figure class={`figure ${item.orientation}`}>
                   <SmartImage
                     srcUrl={item.src}
                     alt={title}
@@ -305,6 +319,11 @@ const sectionLabel =
   .figure :global(.smart-media[data-fit="contain"]) {
     width: auto;
     height: auto;
+  }
+
+  .figure.portrait :global(.smart-media) {
+    max-width: 60%;
+    max-height: auto;
   }
 
   .img-caption {
