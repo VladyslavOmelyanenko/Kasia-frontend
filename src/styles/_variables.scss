@@ -2,7 +2,7 @@
   --fz: 22px;
   --lh: 25px;
   --base-space: 6px;
-  --gray: gray;
+  --gray: #909090;
 
   --page-padding: 25px;
   --sidebar-width: 280px;
@@ -14,15 +14,16 @@
 
 @media (max-width: 768px) {
   :root {
-    --page-padding: 16px;
+    --lh: 21px;
+    --fz: 16px;
+
+    --page-padding: var(--lh);
     --sidebar-width: 0px;
-    --content-width: calc(100vw - 32px);
+    --content-width: calc(100vw - var(--lh) * 2);
 
     --side-gap: 0px;
     --content-left: var(--page-padding);
 
-    --fz: 16px;
-    --lh: 21px;
     /* optional */
   }
 }

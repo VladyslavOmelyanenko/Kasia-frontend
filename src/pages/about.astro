@@ -45,9 +45,16 @@ const bioHtml = about?.bio
 
 
   :global(.about-bio img) {
-    width: 50%;
+    width: 35%;
     height: auto;
     display: block;
 
+  }
+
+  @media (max-width: 768px) {
+  :global(.about-bio) {
+    width: 100%;
+    padding-top: var(--lh);
+  }
   }
 </style>

@@ -3,9 +3,17 @@ import Layout from "../layouts/Layout.astro";
 import Slideshow from "../components/Slideshow.astro";
 import { client, urlFor } from "../lib/sanity";
 
-const coverImages = await client.fetch(`
+const mainPage = await client.fetch(`
   *[_type == "mainPage"][0]{
-    coverGallery[]
+    coverGallery[]{
+      ...,
+      alt,
+      project->{
+        category,
+        "slug": slug.current,
+        title
+      }
+    }
   }
 `);
 ---
@@ -13,7 +21,7 @@ const coverImages = await client.fetch(`
 <Layout>
   <div class="slideshow-container">
     <Slideshow
-      images={coverImages?.coverGallery ?? []}
+      images={mainPage?.coverGallery ?? []}
       urlFor={urlFor}
       interval={5000}
     />
@@ -21,7 +29,6 @@ const coverImages = await client.fetch(`
 </Layout>
 
 <style lang="scss">
-
   .slideshow-container {
     height: calc(100vh - (var(--page-padding) * 2));
     display: flex;

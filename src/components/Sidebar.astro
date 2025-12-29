@@ -184,7 +184,7 @@ const activeSlug = slug;
 </script>
 
 <style lang="scss">
-  /* assumes :root CSS vars are defined globally */
+  /* ========== SIDEBAR (SIMPLIFIED GRAYING) ========== */
 
   .sidebar {
     position: fixed;
@@ -196,8 +196,7 @@ const activeSlug = slug;
     width: var(--sidebar-width);
     gap: var(--lh);
 
-    --outer-dark: #8f8f8f;
-    --outer-light: #cfcfcf;
+    --inactive: #8f8f8f; /* one gray for all inactive */
     --black: #000;
 
     color: var(--black);
@@ -230,7 +229,7 @@ const activeSlug = slug;
     display: none;
     border: 0;
     background: none;
-    padding: 6px 10px;
+    // padding: 6px 10px;
     cursor: pointer;
     color: inherit;
   }
@@ -248,6 +247,7 @@ const activeSlug = slug;
     text-decoration: none;
   }
 
+  /* ---------- Submenu behavior ---------- */
   .submenu {
     display: none;
 
@@ -261,17 +261,61 @@ const activeSlug = slug;
     display: block;
   }
 
+  /* ---------- ABOUT page ---------- */
   .sidebar.is-about {
-    color: var(--outer-dark);
+    color: var(--inactive);
   }
-
   .sidebar.is-about .designer-name,
   .sidebar.is-about .about-link {
     color: var(--black);
   }
 
-  /* hover + active logic untouched */
+  /* ---------- Simplified graying ---------- */
+  /* Dim everything when hovering any link OR when a category is open */
+  .sidebar:has(a:hover),
+  .sidebar:has(.nav-category.is-open) {
+    color: var(--inactive);
+  }
 
+  /* Keep hovered link black */
+  .sidebar a:hover {
+    color: var(--black);
+  }
+
+  /* Keep active bits black */
+  .sidebar .submenu a.is-active,
+  .sidebar .nav-category.is-open > .category-link,
+  .sidebar .designer-name,
+  .sidebar .about-link.is-active {
+    color: var(--black);
+  }
+
+  /* Keep hovered link black (already) */
+  .sidebar a:hover {
+    color: var(--black);
+  }
+
+  /* If hovering a project, keep its category title black too */
+  .sidebar:has(.submenu a:hover)
+    .nav-category:has(.submenu a:hover)
+    > .category-link {
+    color: var(--black);
+  }
+
+  /* If hovering a category title, keep it black (even while others are gray) */
+  .sidebar .category-link:hover {
+    color: var(--black);
+  }
+
+  /* Keep the active category + active project black (already, but ensure) */
+  .sidebar .nav-category.is-open > .category-link {
+    color: var(--black);
+  }
+  .sidebar .submenu a.is-active {
+    color: var(--black);
+  }
+
+  /* ========== MOBILE MENU ========== */
   @media (max-width: 768px) {
     .sidebar {
       top: 0;
@@ -279,12 +323,9 @@ const activeSlug = slug;
       width: 100%;
       padding: var(--page-padding);
       gap: 12px;
-
-      /* default: closed look */
-      background: transparent;
+      background: transparent; /* closed look */
     }
 
-    /* When menu is open, give it a white background */
     .sidebar[data-menu="open"] {
       background: #fff;
       bottom: 0;
@@ -295,16 +336,15 @@ const activeSlug = slug;
       align-items: center;
     }
 
-    /* Hide "costume designer" when closed */
+    /* costume designer only when menu is open */
     .designer-title {
       display: none;
     }
-
-    /* Show it only when open */
     .sidebar[data-menu="open"] .designer-title {
       display: block;
     }
 
+    /* Panel collapses */
     .sidebar .panel {
       display: none;
       padding-top: 12px;
@@ -312,16 +352,29 @@ const activeSlug = slug;
 
     .sidebar[data-menu="open"] .panel {
       display: flex;
+      flex-direction: column;
       gap: var(--lh);
     }
 
-    /* No hover on mobile; show submenu items */
+    /* Submenus only visible when menu is open OR category is open */
     .submenu {
-      display: block;
+      display: none;
 
       a {
         padding-left: 16px;
       }
     }
+
+    .sidebar[data-menu="open"] .submenu,
+    .has-submenu.is-open > .submenu {
+      display: block;
+    }
+  }
+
+  .menu-btn {
+    color: var(--inactive);
+  }
+  .sidebar[data-menu="open"] .menu-btn {
+    color: var(--black);
   }
 </style>

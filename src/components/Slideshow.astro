@@ -1,24 +1,48 @@
 ---
+/**
+ * Expect `images` items like:
+ * {
+ *   asset: { _ref: ... },
+ *   alt?: string,
+ *   project?: { category: string, slug: string }   // resolved in GROQ via project->
+ * }
+ */
 const { images = [], urlFor, interval = 4000 } = Astro.props;
 
-const slides = images
+const slides = (images ?? [])
   .filter((img) => img?.asset?._ref)
-  .map((img) => ({
-    src: urlFor(img).auto("format").url(),
-    alt: img?.alt ?? "",
-  }));
+  .map((img) => {
+    const href =
+      img?.project?.category && img?.project?.slug
+        ? `/${img.project.category}/${img.project.slug}`
+        : null;
+
+    return {
+      src: urlFor(img).auto("format").url(),
+      alt: img?.alt ?? "",
+      href,
+    };
+  });
 ---
 
 <div class="slideshow" data-interval={interval}>
   <div class="slides">
     {
       slides.map((s, i) => (
-        <img
-          class={`slide ${i === 0 ? "is-active" : ""}`}
-          src={s.src}
-          alt={s.alt}
-          loading={i === 0 ? "eager" : "lazy"}
-        />
+        <a
+          class={`slide-hit ${i === 0 ? "is-active" : ""} ${s.href ? "" : "is-disabled"}`}
+          href={s.href ?? "#"}
+          aria-disabled={s.href ? undefined : "true"}
+          tabindex={s.href ? undefined : "-1"}
+        >
+          <img
+            class="slide-img"
+            src={s.src}
+            alt={s.alt}
+            loading={i === 0 ? "eager" : "lazy"}
+            decoding="async"
+          />
+        </a>
       ))
     }
   </div>
@@ -39,30 +63,43 @@ const slides = images
     aspect-ratio: 16 / 9;
   }
 
-  .slide {
+  /* The clickable layer that fades in/out */
+  .slide-hit {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 600ms ease;
+    pointer-events: none;
+    display: block;
+  }
+
+  .slide-hit.is-active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* If no link, don't allow clicks */
+  .slide-hit.is-disabled {
+    pointer-events: none;
+    cursor: default;
+  }
+
+  .slide-img {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    opacity: 0;
-    transition: opacity 600ms ease;
-    pointer-events: none;
+    display: block;
   }
 
-  .slide.is-active {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  /* Optional: if you want a different fit on mobile */
   @media (max-width: 768px) {
     .slides {
-      aspect-ratio: auto; /* let it fill available height */
+      aspect-ratio: auto;
     }
 
-    .slide {
-      object-fit: contain; /* keep contain; change to cover if you want */
+    .slide-img {
+      object-fit: contain;
     }
   }
 </style>
@@ -74,7 +111,7 @@ const slides = images
       if (root.dataset.bound === "1") return;
       root.dataset.bound = "1";
 
-      const slides = Array.from(root.querySelectorAll(".slide"));
+      const slides = Array.from(root.querySelectorAll(".slide-hit"));
       if (slides.length <= 1) return;
 
       const interval = Number(root.dataset.interval) || 4000;
@@ -101,8 +138,6 @@ const slides = images
     });
   }
 
-  // first load
   document.addEventListener("DOMContentLoaded", initSlideshows);
-  // client-side navigation (View Transitions)
   document.addEventListener("astro:after-swap", initSlideshows);
 </script>

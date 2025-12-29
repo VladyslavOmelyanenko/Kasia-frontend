@@ -71,11 +71,23 @@ const award = project?.award ?? "";
 const placeAndYear = project?.placeAndYear ?? "";
 const trailerLink = project?.trailerLink ?? "";
 
+// Next project (same ordering as your sidebar)
+const siblings = await client.fetch(
+  `*[_type == "project" && category == $category && defined(slug.current)]
+    | order(orderRank asc, year desc, title asc){
+      "slug": slug.current
+    }`,
+  { category }
+);
+
+const idx = siblings.findIndex((p) => p.slug === slug);
+const nextSlug =
+  idx >= 0 && siblings.length > 0 ? siblings[(idx + 1) % siblings.length].slug : null;
+const nextHref = nextSlug ? `/${category}/${nextSlug}` : null;
+
 const safeImageUrl = (img) => {
   try {
-    return img?.asset?._ref
-      ? urlFor(img).width(2000).auto("format").url()
-      : null;
+    return img?.asset?._ref ? urlFor(img).width(2000).auto("format").url() : null;
   } catch {
     return null;
   }
@@ -141,124 +153,169 @@ const items = project
         ? { type: "title-award", key: "title-award" }
         : { type: "title-basic", key: "title-basic" },
       ...imageItems,
+      { type: "footer-nav", key: "footer-nav" }, // ✅ last snap item
     ]
   : [];
 
-const count = items.length;
-const COPIES = 5;
-
-const centerCopy = Math.floor(COPIES / 2);
-
-// In each copy, index 0 is the title card, index 1 is the first image
-const firstImageIndexInCopy = 1;
-
-// Eager-load around the first image instead of the title
-const centerStart = centerCopy * count + firstImageIndexInCopy;
-const centerEnd = centerStart + 1;
-
-const repeated = count
-  ? Array.from({ length: COPIES }, () => items).flat()
-  : [];
+const repeated = items;
 
 const sectionLabel =
   category === "film" ? "Film" : category === "opera" ? "Opera" : "Commercials";
 ---
 
-<Layout
-  title={project ? `${title} — ${sectionLabel}` : `${sectionLabel} — Not found`}
->
-  {
-    project ? (
-      <div class="gallery-wrapper">
-        <section
-          class="grid"
-          data-infinite-snap="1"
-          data-count={count}
-          data-copies={COPIES}
-          data-start-at="first-image"
-        >
-          {repeated.map((item, i) => (
-            <div class="snap-item" data-idx={i}>
-              {item.type === "title-award" ? (
-                <header class="title-card">
-                  <div class="left">
-                    <h1 class="title">{title}</h1>
-                    {director && <p>{director}</p>}
-                    {placeAndYear && <p>{placeAndYear}</p>}
-                  </div>
-                  <div class="right">
-                    {award && <p class="award">{award}</p>}
-                    {trailerLink && (
-                      <a
-                        href={trailerLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Trailer
-                      </a>
-                    )}
-                  </div>
-                </header>
-              ) : item.type === "title-basic" ? (
-                <header class="title-card">
-                  <div class="left">
-                    <h1 class="title">{title}</h1>
-                    {director && <p>{director}</p>}
-                  </div>
-                  <div class="right">
-                    {placeAndYear && <p>{placeAndYear}</p>}
-                    {trailerLink && (
-                      <a
-                        href={trailerLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Trailer
-                      </a>
-                    )}
-                  </div>
-                </header>
-              ) : (
-                <figure class={`figure ${item.orientation}`}>
-                  <SmartImage
-                    srcUrl={item.src}
-                    alt={title}
-                    width={item.w}
-                    height={item.h}
-                    lqip={item.lqip}
-                    loading={
-                      i >= centerStart && i < centerEnd ? "eager" : "lazy"
-                    }
-                    fit="cover"
-                    bg="#fff"
-                  />
-                  {item.caption && (
-                    <figcaption class="img-caption">{item.caption}</figcaption>
+<Layout title={project ? `${title} — ${sectionLabel}` : `${sectionLabel} — Not found`}>
+  {project ? (
+    <div class="gallery-wrapper">
+      <section class="grid" data-snap="1">
+        {repeated.map((item, i) => (
+          <div class="snap-item" data-idx={i}>
+            {item.type === "title-award" ? (
+              <header class="title-card">
+                <div class="left">
+                  <h1 class="title">{title}</h1>
+                  {director && <p>{director}</p>}
+                  {placeAndYear && <p>{placeAndYear}</p>}
+                </div>
+                <div class="right">
+                  {award && <p class="award">{award}</p>}
+                  {trailerLink && (
+                    <a href={trailerLink} target="_blank" rel="noopener noreferrer">
+                      Trailer<span class="arrow">↗</span>
+                    </a>
                   )}
-                </figure>
-              )}
-            </div>
-          ))}
-        </section>
-      </div>
-    ) : (
-      <article class="not-found">
-        <h1>Project not found</h1>
-        <p>
-          We couldn’t find a {sectionLabel.toLowerCase()} project for slug:{" "}
-          <code>{slug}</code>
-        </p>
-        <p>
-          <a href={`/${category}`}>Back to {sectionLabel}</a>
-        </p>
-      </article>
-    )
-  }
+                </div>
+              </header>
+            ) : item.type === "title-basic" ? (
+              <header class="title-card">
+                <div class="left">
+                  <h1 class="title">{title}</h1>
+                  {director && <p>{director}</p>}
+                </div>
+                <div class="right">
+                  {placeAndYear && <p>{placeAndYear}</p>}
+                  {trailerLink && (
+                    <a href={trailerLink} target="_blank" rel="noopener noreferrer">
+                      Trailer<span class="arrow">↗</span>
+                    </a>
+                  )}
+                </div>
+              </header>
+            ) : item.type === "footer-nav" ? (
+              <footer class="title-card footer-card" aria-label="Gallery navigation">
+                <div class="left">
+                  <button type="button" class="nav-btn" data-nav="up">
+                    Up<span class="arrow">↑</span>
+                  </button>
+                </div>
+
+                <div class="right">
+                  {nextHref ? (
+                    <a class="nav-btn" href={nextHref}>
+                      Next<span class="arrow">→</span>
+                    </a>
+                  ) : (
+                    <span class="nav-btn is-disabled" aria-disabled="true">
+                      Next<span class="arrow">→</span>
+                    </span>
+                  )}
+                </div>
+              </footer>
+            ) : (
+              <figure class={`figure ${item.orientation}`}>
+                <SmartImage
+                  srcUrl={item.src}
+                  alt={title}
+                  width={item.w}
+                  height={item.h}
+                  lqip={item.lqip}
+                  loading={i === 1 ? "eager" : "lazy"} /* eager-load first image after title */
+                  fit="cover"
+                  bg="#fff"
+                />
+                {item.caption && <figcaption class="img-caption">{item.caption}</figcaption>}
+              </figure>
+            )}
+          </div>
+        ))}
+      </section>
+    </div>
+  ) : (
+    <article class="not-found">
+      <h1>Project not found</h1>
+      <p>
+        We couldn’t find a {sectionLabel.toLowerCase()} project for slug: <code>{slug}</code>
+      </p>
+      <p>
+        <a href={`/${category}`}>Back to {sectionLabel}</a>
+      </p>
+    </article>
+  )}
 </Layout>
 
-<style lang="scss">
-  /* layout vars now come from global CSS custom properties (:root) */
+<script is:inline>
+  function initProjectSnap() {
+    document.querySelectorAll('[data-snap="1"]').forEach((grid) => {
+      if (grid.dataset.snapInited === "1") return;
+      grid.dataset.snapInited = "1";
 
+      // fade
+      grid.dataset.ready = "0";
+
+      // prevent snap fighting initial scroll
+      const prevSnap = grid.style.scrollSnapType;
+      grid.style.scrollSnapType = "none";
+      grid.scrollTop = 0;
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          grid.style.scrollSnapType = prevSnap || "";
+          grid.dataset.ready = "1";
+        });
+      });
+    });
+  }
+
+  function bindFooterNav() {
+    const grid = document.querySelector('[data-snap="1"]');
+    if (!grid) return;
+
+    const footer = grid.querySelector(".footer-card");
+    if (!footer || footer.dataset.bound === "1") return;
+    footer.dataset.bound = "1";
+
+    const upBtn = footer.querySelector('[data-nav="up"]');
+    if (!upBtn) return;
+
+    upBtn.addEventListener("click", () => {
+      const prevSnap = grid.style.scrollSnapType;
+      grid.style.scrollSnapType = "none";
+      grid.scrollTo({ top: 0, behavior: "smooth" });
+
+      // restore snap after scroll starts
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          grid.style.scrollSnapType = prevSnap || "";
+        });
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", () => {
+    initProjectSnap();
+    bindFooterNav();
+  });
+
+  document.addEventListener("astro:after-swap", () => {
+    initProjectSnap();
+    bindFooterNav();
+  });
+
+  // fallback
+  initProjectSnap();
+  bindFooterNav();
+</script>
+
+<style lang="scss">
   .gallery-wrapper {
     position: fixed;
     inset: 0;
@@ -273,13 +330,18 @@ const sectionLabel =
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+
     scroll-snap-type: y mandatory;
     overscroll-behavior: contain;
     scroll-behavior: auto;
+
+    /* lets first/last items snap to center without “running out of space” */
+    // padding-block: 50vh;
+    // scroll-padding-block: 50vh;
   }
 
   .snap-item {
-    scroll-snap-align: center;
+    scroll-snap-align: center; /* ✅ snap in the middle */
     scroll-snap-stop: always;
     display: flex;
     align-items: center;
@@ -301,12 +363,46 @@ const sectionLabel =
     }
   }
 
+  .footer-card .right {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .nav-btn {
+    border: 0;
+    background: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+    text-decoration: none;
+  }
+
+  .nav-btn.is-disabled {
+    opacity: 0.5;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .nav-btn:hover {
+    color: #000;
+  }
+
+  /* lift arrows slightly above baseline */
+  .arrow {
+    display: inline-block;
+    margin-left: 2px;
+    font-size: 0.9em;
+    line-height: 1;
+    transform: translateY(-0.15em);
+  }
+
   .figure {
     margin: 0;
     width: 100%;
   }
 
-  /* SmartImage renders .smart-media -> ensure it behaves like your old img */
   .figure :global(.smart-media) {
     max-width: 100%;
     max-height: 90vh;
@@ -314,16 +410,14 @@ const sectionLabel =
     height: auto;
   }
 
-  /* For contain mode, make the media shrink-to-fit */
   .figure :global(.smart-media[data-fit="contain"]) {
     width: auto;
     height: auto;
   }
 
-  /* Portrait treatment */
   .figure.portrait :global(.smart-media) {
     max-width: 60%;
-    max-height: 90vh; /* "auto" is not valid for max-height */
+    max-height: 90vh;
   }
 
   .img-caption {
@@ -333,5 +427,20 @@ const sectionLabel =
   .not-found {
     padding-left: var(--content-left);
     width: var(--content-width);
+  }
+
+  @media (max-width: 768px) {
+    .gallery-wrapper {
+      left: var(--content-left);
+      width: var(--content-width);
+    }
+
+    .grid {
+      padding-top: calc(var(--lh) * 2);
+    }
+
+    .figure.portrait :global(.smart-media) {
+      max-width: 100%;
+    }
   }
 </style>
