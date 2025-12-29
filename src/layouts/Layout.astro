@@ -15,6 +15,13 @@ import { ViewTransitions } from "astro:transitions";
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
+    <link
+      rel="preload"
+      href="/fonts/ABCWalterAlte-Normalgrotesk.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+    />
   </head>
   <body>
     <ViewTransitions />
@@ -25,6 +32,17 @@ import { ViewTransitions } from "astro:transitions";
       </main>
     </div>
     <script type="module" src="/scripts/infiniteSnap.js"></script>
+    <script is:inline>
+      if ("fonts" in document) {
+        document.fonts
+          .load('500 1em "ABC Walter Alte Normalgrotesk"')
+          .then(() => document.body.classList.add("font-ready"))
+          .catch(() => {});
+      } else {
+        // old browsers: just mark ready
+        document.body.classList.add("font-ready");
+      }
+    </script>
   </body>
 </html>
 

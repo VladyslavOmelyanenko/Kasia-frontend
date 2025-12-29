@@ -29,6 +29,7 @@ const section = parts[0] ?? "";
 const slug = parts[1] ?? null;
 
 const isAboutPage = section === "about";
+const isHomePage = section === "";
 
 const activeCategory =
   section === "opera" || section === "film" || section === "commercials"
@@ -43,7 +44,7 @@ const activeSlug = slug;
 ---
 
 <aside
-  class={`sidebar ${isAboutPage ? "is-about" : ""}`}
+  class={`sidebar ${isAboutPage ? "is-about" : ""} ${isHomePage ? "is-home" : ""}`}
   id="sidebar"
   data-menu="closed"
 >
@@ -170,6 +171,7 @@ const activeSlug = slug;
       setOpen(sidebar.dataset.menu !== "open");
     });
 
+    // close when clicking a link (back to initial)
     panel.addEventListener("click", (e) => {
       if (e.target.closest("a")) setOpen(false);
     });
@@ -184,8 +186,6 @@ const activeSlug = slug;
 </script>
 
 <style lang="scss">
-  /* ========== SIDEBAR (SIMPLIFIED GRAYING) ========== */
-
   .sidebar {
     position: fixed;
     display: flex;
@@ -196,7 +196,7 @@ const activeSlug = slug;
     width: var(--sidebar-width);
     gap: var(--lh);
 
-    --inactive: #8f8f8f; /* one gray for all inactive */
+    --inactive: #8f8f8f;
     --black: #000;
 
     color: var(--black);
@@ -229,7 +229,6 @@ const activeSlug = slug;
     display: none;
     border: 0;
     background: none;
-    // padding: 6px 10px;
     cursor: pointer;
     color: inherit;
   }
@@ -243,11 +242,9 @@ const activeSlug = slug;
   .sidebar a,
   .sidebar span {
     color: inherit;
-    transition: color 0.15s ease;
     text-decoration: none;
   }
 
-  /* ---------- Submenu behavior ---------- */
   .submenu {
     display: none;
 
@@ -261,7 +258,6 @@ const activeSlug = slug;
     display: block;
   }
 
-  /* ---------- ABOUT page ---------- */
   .sidebar.is-about {
     color: var(--inactive);
   }
@@ -270,73 +266,58 @@ const activeSlug = slug;
     color: var(--black);
   }
 
-  /* ---------- Simplified graying ---------- */
-  /* Dim everything when hovering any link OR when a category is open */
+  /* simplified graying (desktop) */
   .sidebar:has(a:hover),
   .sidebar:has(.nav-category.is-open) {
     color: var(--inactive);
   }
-
-  /* Keep hovered link black */
   .sidebar a:hover {
     color: var(--black);
   }
-
-  /* Keep active bits black */
   .sidebar .submenu a.is-active,
   .sidebar .nav-category.is-open > .category-link,
-  .sidebar .designer-name,
   .sidebar .about-link.is-active {
     color: var(--black);
   }
-
-  /* Keep hovered link black (already) */
-  .sidebar a:hover {
+  .sidebar .designer-name {
     color: var(--black);
   }
-
-  /* If hovering a project, keep its category title black too */
   .sidebar:has(.submenu a:hover)
     .nav-category:has(.submenu a:hover)
     > .category-link {
     color: var(--black);
   }
-
-  /* If hovering a category title, keep it black (even while others are gray) */
   .sidebar .category-link:hover {
     color: var(--black);
   }
 
-  /* Keep the active category + active project black (already, but ensure) */
-  .sidebar .nav-category.is-open > .category-link {
-    color: var(--black);
-  }
-  .sidebar .submenu a.is-active {
-    color: var(--black);
-  }
-
-  /* ========== MOBILE MENU ========== */
   @media (max-width: 768px) {
     .sidebar {
       top: 0;
       left: 0;
       width: 100%;
+      overflow: scroll;
       padding: var(--page-padding);
       gap: 12px;
-      background: transparent; /* closed look */
+      // background: transparent;
     }
-
+    
     .sidebar[data-menu="open"] {
       background: #fff;
-      bottom: 0;
+      height: 100dvh;
     }
 
     .menu-btn {
       display: inline-flex;
       align-items: center;
+      color: var(--inactive);
     }
 
-    /* costume designer only when menu is open */
+    .sidebar[data-menu="open"] .menu-btn {
+      color: var(--black);
+    }
+
+    /* show title only when open (no animation) */
     .designer-title {
       display: none;
     }
@@ -344,19 +325,18 @@ const activeSlug = slug;
       display: block;
     }
 
-    /* Panel collapses */
+    /* panel opens/closes instantly (no animation) */
     .sidebar .panel {
       display: none;
       padding-top: 12px;
     }
-
     .sidebar[data-menu="open"] .panel {
       display: flex;
       flex-direction: column;
       gap: var(--lh);
     }
 
-    /* Submenus only visible when menu is open OR category is open */
+    /* submenus visible on mobile when menu open */
     .submenu {
       display: none;
 
@@ -365,16 +345,17 @@ const activeSlug = slug;
       }
     }
 
-    .sidebar[data-menu="open"] .submenu,
-    .has-submenu.is-open > .submenu {
+    .sidebar[data-menu="open"] .submenu {
       display: block;
     }
-  }
 
-  .menu-btn {
-    color: var(--inactive);
-  }
-  .sidebar[data-menu="open"] .menu-btn {
-    color: var(--black);
+    /* mobile name gray on category/project pages */
+    .sidebar:not(.is-about):not(.is-home) .designer-name {
+      color: var(--inactive);
+    }
+    .sidebar.is-home .designer-name,
+    .sidebar.is-about .designer-name {
+      color: var(--black);
+    }
   }
 </style>

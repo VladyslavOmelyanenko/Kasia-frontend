@@ -15,12 +15,11 @@
 @media (max-width: 768px) {
   :root {
     --lh: 21px;
-    --fz: 16px;
+    --fz: 17px;
 
     --page-padding: var(--lh);
     --sidebar-width: 0px;
     --content-width: calc(100vw - var(--lh) * 2);
-
     --side-gap: 0px;
     --content-left: var(--page-padding);
 

@@ -363,10 +363,6 @@ const sectionLabel =
     }
   }
 
-  .footer-card .right {
-    display: flex;
-    justify-content: flex-end;
-  }
 
   .nav-btn {
     border: 0;
@@ -442,5 +438,22 @@ const sectionLabel =
     .figure.portrait :global(.smart-media) {
       max-width: 100%;
     }
+
+     .title-card {
+    flex-direction: column;
+    gap: 0.25rem; /* tighter on mobile */
+    align-items: flex-start;
+  }
+
+  .title-card .left,
+  .title-card .right {
+    width: 100%;
+  }
+
+  /* optional: keep Trailer on its own line */
+  .title-card .right a {
+    display: inline-block;
+    margin-top: 0.25rem;
+  }
   }
 </style>

@@ -1,40 +1,27 @@
 @import "./variables";
 
-/* Fonts */
 @font-face {
   font-family: "ABC Walter Alte Normalgrotesk";
-  src: url("/fonts/ABCWalterAlte-Normalgrotesk.otf") format("opentype");
-  font-weight: 400;
+  src: url("/fonts/ABCWalterAlte-Normalgrotesk.woff2") format("woff2");
+  font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 
-@font-face {
-  font-family: "Fournier";
-  src: url("/fonts/FournierMTStd-Italic.otf") format("opentype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* Base typography */
 body {
-  font-family: "ABC Walter Alte Normalgrotesk", sans-serif;
+  font-family: "ABC Walter Alte Normalgrotesk", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
   font-size: var(--fz);
   line-height: var(--lh);
+  font-weight: 500;
+  /* ✅ final intended weight */
 }
 
-/* Inline emphasis */
-em {
-  font-style: normal;
-}
-
-/* Grid fade-in */
-.grid {
-  opacity: 0;
-}
-
-.grid[data-ready="1"] {
-  opacity: 1;
-  transition: opacity 180ms ease;
+/* Mobile: start bold ONLY until the font is ready */
+@media (max-width: 768px) {
+  body:not(.font-ready) {
+    font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    /* force fallback */
+    font-weight: 700;
+    /* bold fallback */
+  }
 }
