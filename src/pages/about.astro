@@ -30,7 +30,7 @@ const bioHtml = about?.bio
   : "";
 ---
 
-<Layout>
+<Layout title="Katarzyna Lewińska — About">
   <div class="about-bio" set:html={bioHtml} />
 </Layout>
 
@@ -43,18 +43,16 @@ const bioHtml = about?.bio
     margin: 0 0 1rem 0;
   }
 
-
   :global(.about-bio img) {
     width: 35%;
     height: auto;
     display: block;
-
   }
 
   @media (max-width: 768px) {
-  :global(.about-bio) {
-    width: 100%;
-    padding-top: var(--lh);
-  }
+    :global(.about-bio) {
+      width: 100%;
+      padding-top: var(--lh);
+    }
   }
 </style>

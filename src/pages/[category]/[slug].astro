@@ -163,7 +163,7 @@ const sectionLabel =
   category === "film" ? "Film" : category === "opera" ? "Opera" : "Commercials";
 ---
 
-<Layout title={project ? `${title} — ${sectionLabel}` : `${sectionLabel} — Not found`}>
+<Layout title={project ? `Katarzyna Lewińska — ${title}` : `${sectionLabel} — Not found`}>
   {project ? (
     <div class="gallery-wrapper">
       <section class="grid" data-snap="1">
@@ -426,20 +426,20 @@ const sectionLabel =
   }
 
   @media (max-width: 768px) {
-    .gallery-wrapper {
-      left: var(--content-left);
-      width: var(--content-width);
-    }
+  .gallery-wrapper {
+    left: var(--content-left);
+    width: var(--content-width);
+  }
 
-    .grid {
-      padding-top: calc(var(--lh) * 2);
-    }
+  .grid {
+    padding-top: calc(var(--lh) * 2);
+  }
 
-    .figure.portrait :global(.smart-media) {
-      max-width: 100%;
-    }
+  .figure.portrait :global(.smart-media) {
+    max-width: 100%;
+  }
 
-     .title-card {
+  .title-card {
     flex-direction: column;
     gap: 0.25rem; /* tighter on mobile */
     align-items: flex-start;
@@ -448,6 +448,10 @@ const sectionLabel =
   .title-card .left,
   .title-card .right {
     width: 100%;
+  }
+
+  .footer-card {
+    flex-direction: row;
   }
 
   /* optional: keep Trailer on its own line */
